@@ -4,6 +4,7 @@ import moviepy as mpy
 
 from utils.helpers import load_config, get_dynamic_radius, load_particles, check_collisions, display_winner, add_particle_to_frames, remove_dead_particles
 import datetime
+import gc
 
 
 # Initialize global variables
@@ -47,6 +48,7 @@ num_particles = len(particles)
 
 # Main loop
 while running:
+    frame_number = len(frames)
     clock.tick(FPS)
     screen.fill(BG_COLOR)
 
@@ -79,7 +81,7 @@ while running:
         pygame.time.wait(2000)
         running = False
 
-    check_collisions(RADIUS, CELL_SIZE, grid_width, grid_height, particles, timestamp)
+    check_collisions(RADIUS, CELL_SIZE, grid_width, grid_height, particles, timestamp, frame_number)
 
     # Remove dead particles from the list
     particles = remove_dead_particles(particles)
@@ -90,6 +92,21 @@ while running:
 
 # Repeat last frame for 2 seconds
 frames += [frames[-1]] * 2 * FPS  # Assuming 60 FPS
+
+# Clean up variables to free RAM except for frames
+del particles
+del config
+del font
+del screen
+del clock
+del IMG_PATH
+del LOCAL_IMAGES
+
+gc.collect()
+
+# Store each frame in a tmp file just in case
+# for i, frame in enumerate(frames):
+#    mpy.ImageClip(frame).save_frame(f"simulations/{timestamp}/frame_{i:04d}.png")
 
 clip = mpy.ImageSequenceClip(frames, fps=FPS)
 clip.write_videofile(f"simulations/{timestamp}_simulation.mp4", codec='libx264')
